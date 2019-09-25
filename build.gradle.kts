@@ -32,7 +32,7 @@ release {
 
 gradlePlugin {
     plugins {
-        create("greetingsPlugin") {
+        create("codecov") {
             id = "org.enginehub.codecov"
             implementationClass = "org.enginehub.codecov.CodecovPlugin"
         }
@@ -105,11 +105,8 @@ configure<ArtifactoryPluginConvention> {
             invokeMethod("setPassword", project.property("artifactory_password"))
         })
         defaults(delegateClosureOf<ArtifactoryTask> {
-            publications("pluginMaven")
+            publications("pluginMaven", "codecovPluginMarkerMaven")
             setPublishArtifacts(true)
         })
     })
-}
-tasks.named<ArtifactoryTask>("artifactoryPublish") {
-    skip = true
 }
