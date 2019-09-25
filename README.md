@@ -6,6 +6,7 @@ gradle-codecov-plugin
 Gradle plugin to download + run [codecov-exe].
 
 Available from the EngineHub Maven repository: https://maven.enginehub.org/repo/
+
 If you add that repository to the `pluginMangement` block, you can use the following
 to apply the plugin:
 
