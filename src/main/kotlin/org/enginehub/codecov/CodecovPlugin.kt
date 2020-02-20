@@ -49,14 +49,12 @@ class CodecovPlugin : Plugin<Project> {
             val codecovCache = gradle.gradleUserHomeDir.resolve("codecov")
             // no support for provider yet
             // https://github.com/michel-kraemer/gradle-download-task/issues/142
-            val src = KotlinClosure0({
+            src(provider {
                 "https://github.com/codecov/codecov-exe/releases/download/${codecov.version.get()}/${codecovPackageName()}"
             })
-            src(src)
-            val dest = KotlinClosure0({
+            dest(provider {
                 codecovCache.resolve("${codecov.version.get()}/codecov-executable")
             })
-            dest(dest)
             downloadTaskDir(codecovCache)
             onlyIfModified(true)
             useETag(true)

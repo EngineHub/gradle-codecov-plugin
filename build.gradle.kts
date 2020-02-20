@@ -9,7 +9,7 @@ plugins {
     `kotlin-dsl`
     `maven-publish`
     kotlin("jvm") version embeddedKotlinVersion
-    id("com.jfrog.artifactory") version "4.9.10"
+    id("com.jfrog.artifactory") version "4.13.0"
     id("net.minecrell.licenser") version "0.4.1"
     id("net.researchgate.release") version "2.8.1"
 }
@@ -23,7 +23,7 @@ dependencies {
     implementation(gradleApi())
     implementation(gradleKotlinDsl())
     implementation("com.google.gradle:osdetector-gradle-plugin:1.6.2")
-    implementation("de.undercouch:gradle-download-task:4.0.0")
+    implementation("de.undercouch:gradle-download-task:4.0.4")
 }
 
 release {
