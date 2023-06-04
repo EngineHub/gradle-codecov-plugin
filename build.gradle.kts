@@ -10,7 +10,7 @@ plugins {
     `kotlin-dsl`
     `maven-publish`
     kotlin("jvm") version embeddedKotlinVersion
-    id("com.jfrog.artifactory") version "4.13.0"
+    id("com.jfrog.artifactory") version "4.32.0"
     id("org.cadixdev.licenser") version "0.6.1"
     id("net.researchgate.release") version "2.8.1"
 }
