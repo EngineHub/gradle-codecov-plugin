@@ -61,7 +61,7 @@ class CodecovPlugin : Plugin<Project> {
             tempAndMove(true)
         }
         tasks.register("uploadCodecov") {
-            val reportFile = codecov.reportTask.map { it.reports.xml.destination }
+            val reportFile = codecov.reportTask.map { it.reports.xml.outputLocation }
             dependsOn(codecov.reportTask, downloadCodecov)
             inputs.files(reportFile, downloadCodecov)
             inputs.property("token", codecov.token)
