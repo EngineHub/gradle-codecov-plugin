@@ -1,4 +1,5 @@
-import net.minecrell.gradle.licenser.LicenseExtension
+import org.cadixdev.gradle.licenser.LicenseExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.dsl.DoubleDelegateWrapper
 import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig
@@ -10,12 +11,11 @@ plugins {
     `maven-publish`
     kotlin("jvm") version embeddedKotlinVersion
     id("com.jfrog.artifactory") version "4.13.0"
-    id("net.minecrell.licenser") version "0.4.1"
+    id("org.cadixdev.licenser") version "0.6.1"
     id("net.researchgate.release") version "2.8.1"
 }
 
 repositories {
-    jcenter()
     gradlePluginPortal()
 }
 
@@ -39,15 +39,25 @@ gradlePlugin {
     }
 }
 
+plugins.withId("java") {
+    the<JavaPluginExtension>().toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 configure<LicenseExtension> {
-    header = rootProject.file("HEADER.txt")
+    header(rootProject.file("HEADER.txt"))
     exclude("**/META-INF/**")
     exclude("**/*.properties")
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "17"
+}
+
 tasks.withType<JavaCompile>().configureEach {
-    sourceCompatibility = JavaVersion.VERSION_1_8.toString()
-    targetCompatibility = JavaVersion.VERSION_1_8.toString()
+    sourceCompatibility = JavaVersion.VERSION_17.toString()
+    targetCompatibility = JavaVersion.VERSION_17.toString()
 }
 
 if (JavaVersion.current().isJava8Compatible) {
