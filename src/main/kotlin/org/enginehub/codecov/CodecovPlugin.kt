@@ -28,13 +28,17 @@ import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.the
+import org.gradle.process.ExecOperations
 import java.nio.file.Files
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermissions
+import javax.inject.Inject
 
 val Project.codecov get() = the<CodecovExtension>()
 
-class CodecovPlugin : Plugin<Project> {
+class CodecovPlugin @Inject constructor(
+    private val execOperations: ExecOperations,
+) : Plugin<Project> {
     override fun apply(project: Project) {
         with(project) {
             apply(plugin = "com.google.osdetector")
@@ -72,7 +76,7 @@ class CodecovPlugin : Plugin<Project> {
                     val perms = posix.readAttributes().permissions() + PosixFilePermissions.fromString("--x--x--x")
                     posix.setPermissions(perms)
                 }
-                exec {
+                execOperations.exec {
                     executable(executableFile)
                     args("-f", reportFile.get(), "-t", codecov.token.get())
                 }

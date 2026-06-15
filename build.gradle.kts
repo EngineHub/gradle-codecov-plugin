@@ -1,18 +1,15 @@
-import org.cadixdev.gradle.licenser.LicenseExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
-import org.jfrog.gradle.plugin.artifactory.dsl.DoubleDelegateWrapper
-import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
 plugins {
     `java-gradle-plugin`
     `kotlin-dsl`
     `maven-publish`
-    kotlin("jvm") version embeddedKotlinVersion
-    id("com.jfrog.artifactory") version "4.32.0"
-    id("org.cadixdev.licenser") version "0.6.1"
-    id("net.researchgate.release") version "2.8.1"
+    id("com.jfrog.artifactory") version "6.0.4"
+    id("net.octyl.level-headered") version "0.1.2"
+    id("net.researchgate.release") version "3.1.0"
 }
 
 repositories {
@@ -22,12 +19,12 @@ repositories {
 dependencies {
     implementation(gradleApi())
     implementation(gradleKotlinDsl())
-    implementation("com.google.gradle:osdetector-gradle-plugin:1.6.2")
-    implementation("de.undercouch:gradle-download-task:4.0.4")
+    implementation("com.google.gradle:osdetector-gradle-plugin:1.7.3")
+    implementation("de.undercouch:gradle-download-task:5.7.0")
 }
 
 release {
-    tagTemplate = "v\${version}"
+    tagTemplate = "v\$version"
 }
 
 gradlePlugin {
@@ -45,14 +42,12 @@ plugins.withId("java") {
     }
 }
 
-configure<LicenseExtension> {
-    header(rootProject.file("HEADER.txt"))
-    exclude("**/META-INF/**")
-    exclude("**/*.properties")
+levelHeadered {
+    headerTemplate(rootProject.file("HEADER.txt"))
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "17"
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget = JvmTarget.JVM_17
 }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -102,21 +97,22 @@ if (!project.hasProperty("artifactory_user"))
 if (!project.hasProperty("artifactory_password"))
     ext["artifactory_password"] = ""
 configure<ArtifactoryPluginConvention> {
-    publish(delegateClosureOf<PublisherConfig> {
-        setContextUrl(project.property("artifactory_contextUrl"))
-        setPublishIvy(false)
-        setPublishPom(true)
-        repository(delegateClosureOf<DoubleDelegateWrapper> {
-            invokeMethod("setRepoKey", when {
-                "SNAPSHOT" in project.version.toString() -> "libs-snapshot-local"
-                else -> "libs-release-local"
-            })
-            invokeMethod("setUsername", project.property("artifactory_user"))
-            invokeMethod("setPassword", project.property("artifactory_password"))
-        })
-        defaults(delegateClosureOf<ArtifactoryTask> {
-            publications("pluginMaven", "codecovPluginMarkerMaven")
-            setPublishArtifacts(true)
-        })
-    })
+    setContextUrl(project.property("artifactory_contextUrl").toString())
+    clientConfig.publisher.run {
+        repoKey = when {
+            "SNAPSHOT" in project.version.toString() -> "libs-snapshot-local"
+            else -> "libs-release-local"
+        }
+        username = project.property("artifactory_user").toString()
+        password = project.property("artifactory_password").toString()
+        isMaven = true
+        isIvy = false
+    }
+}
+
+// Artifactory eagerly evaluates publications, so this must run after all changes to artifacts are done
+afterEvaluate {
+    tasks.named<ArtifactoryTask>("artifactoryPublish") {
+        publications("pluginMaven", "codecovPluginMarkerMaven")
+    }
 }
