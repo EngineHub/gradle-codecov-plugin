@@ -34,6 +34,9 @@ tasks.named<Test>("test") {
 }
 
 release {
+    git {
+        requireBranch = "master"
+    }
     tagTemplate = "v\$version"
 }
 
