@@ -23,7 +23,8 @@ import com.google.gradle.osdetector.OsDetector
 import de.undercouch.gradle.tasks.download.Download
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.kotlin.dsl.KotlinClosure0
+import org.gradle.api.file.ArchiveOperations
+import org.gradle.api.tasks.Copy
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.create
 import org.gradle.kotlin.dsl.register
@@ -37,6 +38,7 @@ import javax.inject.Inject
 val Project.codecov get() = the<CodecovExtension>()
 
 class CodecovPlugin @Inject constructor(
+    private val archiveOperations: ArchiveOperations,
     private val execOperations: ExecOperations,
 ) : Plugin<Project> {
     override fun apply(project: Project) {
@@ -49,29 +51,35 @@ class CodecovPlugin @Inject constructor(
     }
 
     private fun Project.setupTasks() {
+        val codecovCache = gradle.gradleUserHomeDir.toPath().resolve("codecov")
         val downloadCodecov = tasks.register<Download>("downloadCodecov") {
-            val codecovCache = gradle.gradleUserHomeDir.resolve("codecov")
-            // no support for provider yet
-            // https://github.com/michel-kraemer/gradle-download-task/issues/142
-            src(provider {
-                "https://github.com/codecov/codecov-exe/releases/download/${codecov.version.get()}/${codecovPackageName()}"
+            src(codecov.version.map { version ->
+                "https://github.com/codecov/codecov-exe/releases/download/$version/${codecovPackageName()}"
             })
-            dest(provider {
-                codecovCache.resolve("${codecov.version.get()}/codecov-executable")
+            dest(codecov.version.map { version ->
+                codecovCache.resolve("$version/codecov.zip").toFile()
             })
-            downloadTaskDir(codecovCache)
+            downloadTaskDir(codecovCache.toFile())
             onlyIfModified(true)
             useETag(true)
             tempAndMove(true)
         }
+        val extractCodecov = tasks.register<Copy>("extractCodecov") {
+            dependsOn(downloadCodecov)
+            from(archiveOperations.zipTree(downloadCodecov.map { it.dest.toPath() }))
+            into(codecov.version.map { version ->
+                codecovCache.resolve("$version/extracted")
+            })
+        }
         tasks.register("uploadCodecov") {
             val reportFile = codecov.reportTask.map { it.reports.xml.outputLocation }
-            dependsOn(codecov.reportTask, downloadCodecov)
-            inputs.files(reportFile, downloadCodecov)
+            dependsOn(codecov.reportTask, extractCodecov)
+            inputs.files(reportFile, extractCodecov)
             inputs.property("token", codecov.token)
+            inputs.property("required", codecov.required)
             doFirst {
-                // chmod executable
-                val executableFile = downloadCodecov.get().dest.toPath()
+                val executableFile = extractCodecov.get().destinationDir.toPath()
+                    .resolve(codecovExecutableName())
                 Files.getFileAttributeView(executableFile, PosixFileAttributeView::class.java)?.let { posix ->
                     val perms = posix.readAttributes().permissions() + PosixFilePermissions.fromString("--x--x--x")
                     posix.setPermissions(perms)
@@ -79,6 +87,9 @@ class CodecovPlugin @Inject constructor(
                 execOperations.exec {
                     executable(executableFile)
                     args("-f", reportFile.get(), "-t", codecov.token.get())
+                    if (codecov.required.get()) {
+                        args("--required")
+                    }
                 }
             }
         }
@@ -86,9 +97,16 @@ class CodecovPlugin @Inject constructor(
 
     private fun Project.codecovPackageName(): String {
         return when (the<OsDetector>().os) {
-            "windows" -> "codecov-windows-x64.exe"
-            "osx" -> "codecov-osx-x64"
-            else -> "codecov-linux-x64"
+            "windows" -> "codecov-win7-x64.zip"
+            "osx" -> "codecov-osx-x64.zip"
+            else -> "codecov-linux-x64.zip"
+        }
+    }
+
+    private fun Project.codecovExecutableName(): String {
+        return when (the<OsDetector>().os) {
+            "windows" -> "codecov.exe"
+            else -> "codecov"
         }
     }
 

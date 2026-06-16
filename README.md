@@ -30,5 +30,8 @@ Must be provided. Points to the `JacocoReport` task who's XML report should be u
 
 You must enable the XML report manually.
 
+### `required`
+Whether a failed upload should fail the build. Defaults to `true`.
+
 [codecov-exe]: https://github.com/codecov/codecov-exe
 

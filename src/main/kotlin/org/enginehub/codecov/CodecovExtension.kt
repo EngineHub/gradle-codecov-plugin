@@ -26,7 +26,8 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
 open class CodecovExtension(
     project: Project
 ) {
-    val version = project.objects.property<String>().convention("1.10.0")
+    val version = project.objects.property<String>().convention("1.13.0")
     val token = project.objects.property<String>().convention(System.getenv("CODECOV_TOKEN"))
     val reportTask = project.objects.property<JacocoReport>()
+    val required = project.objects.property<Boolean>().convention(true)
 }

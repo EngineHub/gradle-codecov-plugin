@@ -13,6 +13,7 @@ plugins {
 }
 
 repositories {
+    mavenCentral()
     gradlePluginPortal()
 }
 
@@ -21,6 +22,15 @@ dependencies {
     implementation(gradleKotlinDsl())
     implementation("com.google.gradle:osdetector-gradle-plugin:1.7.3")
     implementation("de.undercouch:gradle-download-task:5.7.0")
+
+    testImplementation(gradleTestKit())
+    testImplementation(platform("org.junit:junit-bom:6.1.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
 }
 
 release {
