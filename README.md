@@ -1,3 +1,7 @@
+# Deprecated
+
+The upstream version of codecov this uses (https://github.com/codecov/codecov-exe) is deprecated so this is no longer maintained.
+
 gradle-codecov-plugin
 =====================
 
